@@ -24,83 +24,31 @@ function grab() {
   div.append(`<br><div>SIZES: ${sizes.join("  ")}</div>`);
   div.append(`<br><div>COLORS: ${colors.join("  ")}</div><br>`);
   let button = $("<button>", { "text": "Save" });
-  button.click(function () {
-    save(title, price, image_urls, sizes, colors);
+  button.click(async function () {
+    await save(title, price, image_urls, sizes, colors);
   });
   div.append(button)
   $('#content_container').empty().append(div);
 }
 
 
-function save(title, price, image_urls, sizes, colors) {
+async function save(title, price, image_urls, sizes, colors) {
   sizes = auto_index_arr(sizes);
   colors = auto_index_arr(colors);
   const { options, variants } = create_options_variants(sizes, colors, price);
-
   const product = { title, options, variants };
-
   console.log(product);
-
-  const username = "25a06c0e15efa43cd9af8377d60df652";
-  const password = "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";
-  const address = "testshop1819u89ue.myshopify.com/admin/api/2021-07/products.json";
-
-  // save_shopify_ajax(product, username, password, address);
-  // save_shopify_fetch(product, username, password, address);
-  save_shopify_bg(product, username, password, address);
-
+  await save_shopify_bg(product, image_urls);
 }
 
-function save_shopify_bg(product, username, password, address) {
-  chrome.runtime.sendMessage({ product, username, password, address });
-  let intervalID = setInterval(function () {
-    chrome.storage.sync.get("status", ({ status }) => {
-      if (status != 0) {
-        window.clearInterval(intervalID);
-        if ((status == 201) || (status == 200)){
-          alert("Success!");
-        } else {
-          alert("Failed Saving Data!");
-        }
-      }
-    });
-  }, 500);
-}
-
-
-function save_shopify_ajax(product, username, password, address) {
-  const url = "https://" + username + ":" + password + "@" + address;
-  // let url = "https://ptsv2.com/t/cerqj-1628472941/post";
-  $.ajax({
-    url: url,
-    dataType: 'json',
-    type: 'post',
-    contentType: 'application/json',
-    data: JSON.stringify({ product }),
-    processData: false,
-    success: function (data, textStatus, jQxhr) {
-      console.log("success");
-    },
-    error: function (jqXhr, textStatus, errorThrown) {
-      console.log(jqXhr, textStatus, errorThrown);
+async function save_shopify_bg(product, image_urls) {
+  chrome.runtime.sendMessage({ product, image_urls }, function (success) {
+    if (success) {
+      alert("Success!");
+    } else {
+      alert("Failed Saving Data!");
     }
   });
-}
-
-
-function save_shopify_fetch(product, username, password, address) {
-  let headers = new Headers();
-  headers.append('Authorization', 'Basic' + " " + btoa(username + ':' + password));
-  headers.append('Content-Type', 'application/json');
-  let url = "https://" + address;
-  // let url = "https://ptsv2.com/t/cerqj-1628472941/post";
-  fetch(url, {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify({product}),
-  }).then(response => {
-    console.log(response);
-  })
 }
 
 
